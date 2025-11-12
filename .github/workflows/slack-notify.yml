@@ -40,7 +40,7 @@ jobs:
           # 🔔 레포 전용 채널
           curl -X POST -H 'Content-type: application/json' \
             --data "$payload" \
-            **"${SLACK_REPO_WEBHOOK}"**
+            **"${SLACK_USER_FRONTEND_WEBHOOK}"**
 
       - name: Send PR opened / reopened message
         if: ${{ github.event_name == 'pull_request' && github.event.action != 'closed' }}
@@ -58,7 +58,7 @@ jobs:
 
           curl -X POST -H 'Content-type: application/json' \
             --data "$payload" \
-            **"${SLACK_REPO_WEBHOOK}"**
+            **"${SLACK_USER_FRONTEND_WEBHOOK}"**
 
       - name: Send PR merged message
         if: ${{ github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true }}
