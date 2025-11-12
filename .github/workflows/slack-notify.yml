@@ -28,19 +28,25 @@ jobs:
         if: ${{ github.event_name == 'push' }}
         run: |
           TEXT="🟢 [${REPO}] ${ACTOR}가 '${REF_NAME}' 브랜치에 push 했습니다."
-          # jq를 사용하여 TEXT를 안전하게 JSON 페이로드로 변환
           payload=$(echo "$TEXT" | jq -R --slurp '{"text":.}')
 
-          # 🔔 공용 채널(#hotelhub-general)
-          # 웹훅 URL 변수를 큰따옴표로 감싸서 curl 오류 해결
-          curl -X POST -H 'Content-type: application/json' \
-            --data "$payload" \
-            **"${SLACK_GENERAL_WEBHOOK}"**
+          # **새로운 변수**를 만들어 공백을 제거합니다.
+          WEBHOOK_GENERAL=$(echo "${SLACK_GENERAL_WEBHOOK}" | tr -d '[:space:]')
+          WEBHOOK_USER=$(echo "${SLACK_USER_FRONTEND_WEBHOOK}" | tr -d '[:space:]')
 
-          # 🔔 레포 전용 채널
+          # 🔔 공용 채널
           curl -X POST -H 'Content-type: application/json' \
             --data "$payload" \
-            **"${SLACK_USER_FRONTEND_WEBHOOK}"**
+            "${WEBHOOK_GENERAL}" # 새로운 변수 사용
+
+          # 🔔 레포 전용 채널 (조건부 실행과 함께 적용)
+          if [ -n "$WEBHOOK_USER" ]; then
+            curl -X POST -H 'Content-type: application/json' \
+              --data "$payload" \
+              "${WEBHOOK_USER}" # 새로운 변수 사용
+          else
+            echo "SLACK_USER_FRONTEND_WEBHOOK 변수가 비어있어 레포 전용 알림을 건너뜁니다."
+          fi
 
       - name: Send PR opened / reopened message
         if: ${{ github.event_name == 'pull_request' && github.event.action != 'closed' }}
