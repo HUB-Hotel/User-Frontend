@@ -5,7 +5,7 @@ on:
     branches:
       - main
       - develop
-        # 🔐 branch 추가 가능
+      # 🔐 branch 추가 가능
   pull_request:
     types: [opened, reopened, closed]
 
@@ -28,17 +28,19 @@ jobs:
         if: ${{ github.event_name == 'push' }}
         run: |
           TEXT="🟢 [${REPO}] ${ACTOR}가 '${REF_NAME}' 브랜치에 push 했습니다."
-          payload=$(printf '{"text":"%s"}' "$TEXT")
+          # jq를 사용하여 TEXT를 안전하게 JSON 페이로드로 변환
+          payload=$(echo "$TEXT" | jq -R --slurp '{"text":.}')
 
           # 🔔 공용 채널(#hotelhub-general)
+          # 웹훅 URL 변수를 큰따옴표로 감싸서 curl 오류 해결
           curl -X POST -H 'Content-type: application/json' \
             --data "$payload" \
-            "$SLACK_GENERAL_WEBHOOK"
+            **"${SLACK_GENERAL_WEBHOOK}"**
 
           # 🔔 레포 전용 채널
           curl -X POST -H 'Content-type: application/json' \
             --data "$payload" \
-            "$SLACK_REPO_WEBHOOK"
+            **"${SLACK_REPO_WEBHOOK}"**
 
       - name: Send PR opened / reopened message
         if: ${{ github.event_name == 'pull_request' && github.event.action != 'closed' }}
@@ -47,15 +49,16 @@ jobs:
           PR_URL: ${{ github.event.pull_request.html_url }}
         run: |
           TEXT="📝 [${REPO}] PR 생성/수정: ${PR_TITLE}\n👤 ${ACTOR}\n🔗 ${PR_URL}"
-          payload=$(printf '{"text":"%s"}' "$TEXT")
+          # jq를 사용하여 TEXT를 안전하게 JSON 페이로드로 변환
+          payload=$(echo "$TEXT" | jq -R --slurp '{"text":.}')
 
           curl -X POST -H 'Content-type: application/json' \
             --data "$payload" \
-            "$SLACK_GENERAL_WEBHOOK"
+            **"${SLACK_GENERAL_WEBHOOK}"**
 
           curl -X POST -H 'Content-type: application/json' \
             --data "$payload" \
-            "$SLACK_REPO_WEBHOOK"
+            **"${SLACK_REPO_WEBHOOK}"**
 
       - name: Send PR merged message
         if: ${{ github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true }}
@@ -64,12 +67,13 @@ jobs:
           PR_URL: ${{ github.event.pull_request.html_url }}
         run: |
           TEXT="✅ [${REPO}] PR 머지 완료: ${PR_TITLE}\n👤 ${ACTOR}\n🔗 ${PR_URL}"
-          payload=$(printf '{"text":"%s"}' "$TEXT")
+          # jq를 사용하여 TEXT를 안전하게 JSON 페이로드로 변환
+          payload=$(echo "$TEXT" | jq -R --slurp '{"text":.}')
 
           curl -X POST -H 'Content-type: application/json' \
             --data "$payload" \
-            "$SLACK_GENERAL_WEBHOOK"
+            **"${SLACK_GENERAL_WEBHOOK}"**
 
           curl -X POST -H 'Content-type: application/json' \
             --data "$payload" \
-            "$SLACK_REPO_WEBHOOK"
+            **"${SLACK_REPO_WEBHOOK}"**
