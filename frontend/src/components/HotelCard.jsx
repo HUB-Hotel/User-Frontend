@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { FiHeart } from 'react-icons/fi';
 import './style/HotelCard.scss';
 
 const HotelCard = ({ hotel }) => {
+  const navigate = useNavigate();
   const [isFavorited, setIsFavorited] = useState(false);
 
   // localStorage에서 찜한 숙소 목록 불러오기
@@ -14,7 +16,7 @@ const HotelCard = ({ hotel }) => {
   const handleHeartClick = (e) => {
     e.stopPropagation();
     const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
-    
+
     if (isFavorited) {
       // 찜 해제
       const updatedFavorites = favorites.filter((id) => id !== hotel.id);
@@ -45,7 +47,7 @@ const HotelCard = ({ hotel }) => {
       <div className="hotel-image-wrapper">
         <img src={hotel.image} alt={hotel.name} className="hotel-image" />
         <div className="image-badge">{hotel.imageCount} images</div>
-        <button 
+        <button
           className={`heart-button ${isFavorited ? 'favorited' : ''}`}
           onClick={handleHeartClick}
         >
@@ -68,7 +70,12 @@ const HotelCard = ({ hotel }) => {
           <span className="review-text">{hotel.reviewText}</span>
           <span className="review-count">{hotel.reviewCount} reviews</span>
         </div>
-        <button className="btn primary view-button">보러가기</button>
+        <button
+          className="btn primary view-button"
+          onClick={() => navigate(`/hotel/${hotel.id}`)}
+        >
+          보러가기
+        </button>
       </div>
     </div>
   );

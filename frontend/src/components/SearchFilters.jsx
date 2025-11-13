@@ -32,35 +32,88 @@ const SearchFilters = ({ onFilterChange }) => {
   }, [priceRange, selectedRating, freebies, amenities]);
 
   const handleFreebieChange = (key) => {
-    setFreebies((prev) => ({
-      ...prev,
-      [key]: !prev[key],
-    }));
+    setFreebies((prev) => {
+      const updated = {
+        ...prev,
+        [key]: !prev[key],
+      };
+      // 즉시 부모 컴포넌트에 알림
+      if (onFilterChange) {
+        onFilterChange({
+          priceRange,
+          selectedRating,
+          freebies: updated,
+          amenities,
+        });
+      }
+      return updated;
+    });
   };
 
   const handleAmenityChange = (key) => {
-    setAmenities((prev) => ({
-      ...prev,
-      [key]: !prev[key],
-    }));
+    setAmenities((prev) => {
+      const updated = {
+        ...prev,
+        [key]: !prev[key],
+      };
+      // 즉시 부모 컴포넌트에 알림
+      if (onFilterChange) {
+        onFilterChange({
+          priceRange,
+          selectedRating,
+          freebies,
+          amenities: updated,
+        });
+      }
+      return updated;
+    });
+  };
+
+  const handleRatingChange = (rating) => {
+    const newRating = selectedRating === rating ? null : rating;
+    setSelectedRating(newRating);
+    // 즉시 부모 컴포넌트에 알림
+    if (onFilterChange) {
+      onFilterChange({
+        priceRange,
+        selectedRating: newRating,
+        freebies,
+        amenities,
+      });
+    }
   };
 
   const handleResetAll = () => {
-    setPriceRange([50000, 1200000]);
-    setSelectedRating(null);
-    setFreebies({
+    const resetPriceRange = [50000, 1200000];
+    const resetRating = null;
+    const resetFreebies = {
       breakfast: false,
       parking: false,
       wifi: false,
       shuttle: false,
       cancellation: false,
-    });
-    setAmenities({
+    };
+    const resetAmenities = {
       frontDesk: false,
       aircon: false,
       fitness: false,
       pool: false,
-    });
+    };
+
+    setPriceRange(resetPriceRange);
+    setSelectedRating(resetRating);
+    setFreebies(resetFreebies);
+    setAmenities(resetAmenities);
+
+    // 즉시 부모 컴포넌트에 알림
+    if (onFilterChange) {
+      onFilterChange({
+        priceRange: resetPriceRange,
+        selectedRating: resetRating,
+        freebies: resetFreebies,
+        amenities: resetAmenities,
+      });
+    }
   };
 
   return (
@@ -87,7 +140,19 @@ const SearchFilters = ({ onFilterChange }) => {
               max="2000000"
               step="10000"
               value={priceRange[1]}
-              onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value)])}
+              onChange={(e) => {
+                const newPriceRange = [priceRange[0], parseInt(e.target.value)];
+                setPriceRange(newPriceRange);
+                // 즉시 부모 컴포넌트에 알림
+                if (onFilterChange) {
+                  onFilterChange({
+                    priceRange: newPriceRange,
+                    selectedRating,
+                    freebies,
+                    amenities,
+                  });
+                }
+              }}
               className="price-slider"
             />
           </div>
@@ -101,7 +166,7 @@ const SearchFilters = ({ onFilterChange }) => {
             <button
               key={rating}
               className={`rating-button ${selectedRating === rating ? 'active' : ''}`}
-              onClick={() => setSelectedRating(selectedRating === rating ? null : rating)}
+              onClick={() => handleRatingChange(rating)}
             >
               {rating}+
             </button>

@@ -1269,7 +1269,8 @@ const SearchResults = () => {
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState('All');
   const [sortBy, setSortBy] = useState('Recommended');
-  const [visibleCount, setVisibleCount] = useState(4);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 4;
   const [filterOptions, setFilterOptions] = useState({
     priceRange: [50000, 1200000],
     selectedRating: null,
@@ -1361,7 +1362,7 @@ const SearchResults = () => {
     });
 
     // 별점 필터링
-    if (filterOptions.selectedRating !== null) {
+    if (filterOptions.selectedRating !== null && filterOptions.selectedRating !== undefined) {
       filtered = filtered.filter((hotel) => hotel.starRating >= filterOptions.selectedRating);
     }
 
@@ -1406,8 +1407,8 @@ const SearchResults = () => {
     return filtered;
   }, [destination, checkIn, checkOut, sortBy, filterOptions, activeTab]);
 
-  // 검색 조건(도시, 날짜)만 적용한 결과 (타입 필터링 전)
-  const searchFilteredHotels = useMemo(() => {
+  // 필터 옵션을 적용한 결과 (타입 필터링 제외) - 탭 개수 계산용
+  const filteredHotelsForCounts = useMemo(() => {
     let filtered = [...allHotelsData];
 
     // 도시별 필터링
@@ -1419,7 +1420,7 @@ const SearchResults = () => {
       });
     }
 
-    // 날짜별 가격 변동 (시뮬레이션) - 필터링은 아니지만 가격 조정
+    // 날짜별 가격 변동 (시뮬레이션)
     if (checkIn && checkOut) {
       const checkInDate = parseISO(checkIn);
       const checkOutDate = parseISO(checkOut);
@@ -1445,17 +1446,49 @@ const SearchResults = () => {
       });
     }
 
-    return filtered;
-  }, [destination, checkIn, checkOut]);
+    // 가격 범위 필터링
+    filtered = filtered.filter((hotel) => {
+      return hotel.price >= filterOptions.priceRange[0] && hotel.price <= filterOptions.priceRange[1];
+    });
 
-  // 탭별 개수 계산 (검색 조건 적용 후)
+    // 별점 필터링
+    if (filterOptions.selectedRating !== null && filterOptions.selectedRating !== undefined) {
+      filtered = filtered.filter((hotel) => hotel.starRating >= filterOptions.selectedRating);
+    }
+
+    // 무료 서비스 필터링
+    const selectedFreebies = Object.entries(filterOptions.freebies)
+      .filter(([_, selected]) => selected)
+      .map(([key]) => key);
+    
+    if (selectedFreebies.length > 0) {
+      filtered = filtered.filter((hotel) => {
+        return selectedFreebies.every((freebie) => hotel.freebies?.[freebie]);
+      });
+    }
+
+    // 편의시설 필터링
+    const selectedAmenities = Object.entries(filterOptions.amenities)
+      .filter(([_, selected]) => selected)
+      .map(([key]) => key);
+    
+    if (selectedAmenities.length > 0) {
+      filtered = filtered.filter((hotel) => {
+        return selectedAmenities.every((amenity) => hotel.amenities?.[amenity]);
+      });
+    }
+
+    return filtered;
+  }, [destination, checkIn, checkOut, filterOptions]);
+
+  // 탭별 개수 계산 (필터 옵션 적용 후)
   const getTabCounts = useMemo(() => {
-    const all = searchFilteredHotels.length;
-    const hotels = searchFilteredHotels.filter((h) => h.type === 'hotel' || !h.type).length;
-    const motels = searchFilteredHotels.filter((h) => h.type === 'motel').length;
-    const resorts = searchFilteredHotels.filter((h) => h.type === 'resort').length;
+    const all = filteredHotelsForCounts.length;
+    const hotels = filteredHotelsForCounts.filter((h) => h.type === 'hotel' || !h.type).length;
+    const motels = filteredHotelsForCounts.filter((h) => h.type === 'motel').length;
+    const resorts = filteredHotelsForCounts.filter((h) => h.type === 'resort').length;
     return { all, hotels, motels, resorts };
-  }, [searchFilteredHotels]);
+  }, [filteredHotelsForCounts]);
 
   const tabs = [
     { id: 'All', label: 'All', count: getTabCounts.all },
@@ -1468,13 +1501,29 @@ const SearchResults = () => {
     return filteredHotels.length;
   };
 
-  const handleShowMore = () => {
-    setVisibleCount((prev) => prev + 4);
+  // 페이지네이션 계산
+  const totalPages = Math.ceil(filteredHotels.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentHotels = filteredHotels.slice(startIndex, endIndex);
+
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage((prev) => prev - 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
-  // 검색 조건이 변경되면 visibleCount 리셋
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage((prev) => prev + 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  // 검색 조건이 변경되면 페이지 리셋
   useEffect(() => {
-    setVisibleCount(4);
+    setCurrentPage(1);
   }, [destination, checkIn, checkOut, activeTab, filterOptions]);
 
   return (
@@ -1501,7 +1550,7 @@ const SearchResults = () => {
             </div>
             <div className="results-controls">
               <span className="results-count">
-                {getTotalCount()}개 중 {Math.min(visibleCount, filteredHotels.length)}개 표시
+                {getTotalCount()}개 중 {currentHotels.length}개 표시
               </span>
               <select
                 className="sort-select"
@@ -1517,7 +1566,7 @@ const SearchResults = () => {
           </div>
           <div className="hotels-list">
             {filteredHotels.length > 0 ? (
-              filteredHotels.slice(0, visibleCount).map((hotel) => (
+              currentHotels.map((hotel) => (
                 <HotelCard key={hotel.id} hotel={hotel} />
               ))
             ) : (
@@ -1527,10 +1576,28 @@ const SearchResults = () => {
               </div>
             )}
           </div>
-          {visibleCount < filteredHotels.length && (
-            <button className="btn primary show-more-button" onClick={handleShowMore}>
-              더보기
-            </button>
+          {filteredHotels.length > 0 && totalPages > 1 && (
+            <div className="pagination">
+              <button
+                className="pagination-button"
+                onClick={handlePreviousPage}
+                disabled={currentPage === 1}
+                aria-label="이전 페이지"
+              >
+                &lt;
+              </button>
+              <span className="pagination-info">
+                {currentPage} of {totalPages}
+              </span>
+              <button
+                className="pagination-button"
+                onClick={handleNextPage}
+                disabled={currentPage === totalPages}
+                aria-label="다음 페이지"
+              >
+                &gt;
+              </button>
+            </div>
           )}
         </main>
       </div>

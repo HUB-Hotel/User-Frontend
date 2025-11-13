@@ -54,7 +54,7 @@ const TravelCards = () => {
       <div className="section-header">
         <div>
           <span className="section-badge">나라 추천</span>
-          <h2 className="section-title">투가상품으로 완성하는 여행을 예약해보세요</h2>
+          <h2 className="section-title">인기있는 여행지를 확인해보세요</h2>
         </div>
         <button className="btn see-all">전체보기</button>
       </div>
@@ -66,7 +66,7 @@ const TravelCards = () => {
               <h3>{card.city}</h3>
               <p>{card.description}</p>
               <span className="price">{card.price}</span>
-              <button 
+              <button
                 className="btn action-button"
                 onClick={() => handleCountryClick(card.destination)}
               >

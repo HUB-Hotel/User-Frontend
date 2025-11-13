@@ -12,9 +12,9 @@ const HeroSection = () => {
         <div className="hero-background"></div>
         <div className="hero-content">
           <span className="badge">신청해보세요</span>
-          <h1 className="hero-title">플러스 호텔 및 다양한 숙소를 확인하세요!</h1>
+          <h1 className="hero-title">호텔 및 다양한 숙소를 확인하세요!</h1>
           <p className="hero-description">
-            직설 속 호텔 요금을 비교하고 무료 취소로 여행 준비도 확인하세요!
+            나라별 숙소 요금을 비교하고 여행 준비를 확인하세요!
           </p>
           <SearchCard />
         </div>
