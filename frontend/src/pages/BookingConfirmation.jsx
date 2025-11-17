@@ -56,6 +56,7 @@ const BookingConfirmation = () => {
   const navigate = useNavigate();
   const [booking, setBooking] = useState(location.state || defaultBooking);
   const [bookingHistory, setBookingHistory] = useState([]);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(true);
 
   const formatCurrency = (value) => {
     if (value === undefined || value === null) return '-';
@@ -121,34 +122,46 @@ const BookingConfirmation = () => {
         {bookingHistory.length > 0 && (
           <section className="booking-history-section">
             <div className="section-header">
-              <h2>예약 내역</h2>
-              <p>최신 예약부터 최대 10건까지 확인할 수 있습니다.</p>
+              <div className="section-copy">
+                <h2>예약 내역</h2>
+                <p>최신 예약부터 최대 10건까지 확인할 수 있습니다.</p>
+              </div>
+              <button
+                type="button"
+                className="toggle-history"
+                onClick={() => setIsHistoryOpen((prev) => !prev)}
+                aria-expanded={isHistoryOpen}
+              >
+                {isHistoryOpen ? '접기' : '펼치기'}
+              </button>
             </div>
-            <div className="history-list">
-              {bookingHistory.map((item) => {
-                const isActive = item.bookingNumber === booking.bookingNumber;
-                return (
-                  <article
-                    key={`${item.bookingNumber}_${item.createdAt}`}
-                    className={`history-card ${isActive ? 'active' : ''}`}
-                  >
-                    <div className="history-main">
-                      <strong>{item.hotelName}</strong>
-                      <span>{item.roomName}</span>
-                    </div>
-                    <div className="history-meta">
-                      <span>
-                        {item.checkInDateLabel} - {item.checkOutDateLabel}
-                      </span>
-                      <span>{formatHistoryDate(item.createdAt)}</span>
-                    </div>
-                    <button type="button" onClick={() => handleSelectBooking(item)}>
-                      상세 보기
-                    </button>
-                  </article>
-                );
-              })}
-            </div>
+            {isHistoryOpen && (
+              <div className="history-list">
+                {bookingHistory.map((item) => {
+                  const isActive = item.bookingNumber === booking.bookingNumber;
+                  return (
+                    <article
+                      key={`${item.bookingNumber}_${item.createdAt}`}
+                      className={`history-card ${isActive ? 'active' : ''}`}
+                    >
+                      <div className="history-main">
+                        <strong>{item.hotelName}</strong>
+                        <span>{item.roomName}</span>
+                      </div>
+                      <div className="history-meta">
+                        <span>
+                          {item.checkInDateLabel} - {item.checkOutDateLabel}
+                        </span>
+                        <span>{formatHistoryDate(item.createdAt)}</span>
+                      </div>
+                      <button type="button" onClick={() => handleSelectBooking(item)}>
+                        상세 보기
+                      </button>
+                    </article>
+                  );
+                })}
+              </div>
+            )}
           </section>
         )}
 

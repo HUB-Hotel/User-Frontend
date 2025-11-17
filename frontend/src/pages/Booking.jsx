@@ -18,14 +18,8 @@ const Booking = () => {
   const rooms = searchParams.get('rooms') || '1';
   const guests = searchParams.get('guests') || '2';
   
-  const [paymentMethods, setPaymentMethods] = useState([
-    {
-      id: 'card1',
-      label: 'VISA ****4321 02/27',
-      brand: 'VISA',
-    },
-  ]);
-  const [selectedCard, setSelectedCard] = useState('card1');
+  const [paymentMethods, setPaymentMethods] = useState([]);
+  const [selectedCard, setSelectedCard] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [couponCode, setCouponCode] = useState('');
   const [couponMessage, setCouponMessage] = useState('');
@@ -89,6 +83,20 @@ const Booking = () => {
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    // localStorage에서 결제수단 불러오기
+    const stored = localStorage.getItem('paymentMethods');
+    if (stored) {
+      try {
+        const methods = JSON.parse(stored);
+        setPaymentMethods(methods);
+        if (methods.length > 0) {
+          setSelectedCard(methods[0].id);
+        }
+      } catch (error) {
+        console.error('Failed to load payment methods', error);
+      }
+    }
   }, []);
 
   useEffect(() => {
@@ -183,10 +191,17 @@ const Booking = () => {
       id: newId,
       label: `${newCard.cardName} ****${last4} ${newCard.expDate}`,
       brand: sanitizedNumber.startsWith('4') ? 'VISA' : 'Card',
+      cardNumber: sanitizedNumber,
+      expDate: newCard.expDate,
+      cardName: newCard.cardName,
+      country: newCard.country,
     };
 
-    setPaymentMethods((prev) => [...prev, newMethod]);
+    const updatedMethods = [...paymentMethods, newMethod];
+    setPaymentMethods(updatedMethods);
     setSelectedCard(newId);
+    // localStorage에 저장
+    localStorage.setItem('paymentMethods', JSON.stringify(updatedMethods));
     setIsAddCardModalOpen(false);
     setNewCard({
       cardNumber: '',
@@ -200,10 +215,16 @@ const Booking = () => {
 
   const handleDeleteCard = (cardId, e) => {
     e.stopPropagation();
-    if (cardId === 'card1') return;
-    setPaymentMethods((prev) => prev.filter((method) => method.id !== cardId));
+    const updatedMethods = paymentMethods.filter((method) => method.id !== cardId);
+    setPaymentMethods(updatedMethods);
+    // localStorage에 저장
+    localStorage.setItem('paymentMethods', JSON.stringify(updatedMethods));
     if (selectedCard === cardId) {
-      setSelectedCard('card1');
+      if (updatedMethods.length > 0) {
+        setSelectedCard(updatedMethods[0].id);
+      } else {
+        setSelectedCard('');
+      }
     }
   };
 

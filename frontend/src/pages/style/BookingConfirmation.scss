@@ -413,18 +413,40 @@
 
   .section-header {
     display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
 
-    h2 {
-      margin: 0;
-      font-size: 2rem;
+    .section-copy {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+
+      h2 {
+        margin: 0;
+        font-size: 2rem;
+      }
+
+      p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 1.4rem;
+      }
     }
 
-    p {
-      margin: 0;
-      color: var(--muted);
-      font-size: 1.4rem;
+    .toggle-history {
+      border: 0.1rem solid var(--border);
+      background: #fff;
+      color: var(--text);
+      border-radius: 999px;
+      padding: 0.6rem 1.4rem;
+      cursor: pointer;
+      font-weight: 600;
+
+      &:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+      }
     }
   }
 

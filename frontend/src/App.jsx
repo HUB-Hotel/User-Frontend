@@ -7,6 +7,10 @@ import Favorites from './pages/Favorites';
 import HotelDetail from './pages/HotelDetail';
 import Booking from './pages/Booking';
 import BookingConfirmation from './pages/BookingConfirmation';
+import Login from './pages/Login';
+import SignUp from './pages/SignUp';
+import ForgotPassword from './pages/ForgotPassword';
+import Account from './pages/Account';
 
 function App() {
   return (
@@ -18,6 +22,10 @@ function App() {
         <Route path="/hotel/:id" element={<HotelDetail />} />
         <Route path="/hotel/:id/booking/:roomId" element={<Booking />} />
         <Route path="/booking-confirmation" element={<BookingConfirmation />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<SignUp />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/account" element={<Account />} />
       </Routes>
     </div>
   );
