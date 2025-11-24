@@ -309,6 +309,8 @@ const HotelDetail = () => {
   const calendarRef = useRef(null);
   const guestRef = useRef(null);
   const roomsSectionRef = useRef(null);
+  const mapContainerRef = useRef(null);
+  const mapRef = useRef(null);
 
   const hotel = useMemo(() => {
     return allHotelsData.find((h) => h.id === parseInt(id));
@@ -483,6 +485,54 @@ const HotelDetail = () => {
     const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
     setIsFavorited(favorites.includes(hotel?.id));
   }, [hotel?.id]);
+
+  // 카카오 맵 초기화
+  useEffect(() => {
+    if (!hotel?.address || !mapContainerRef.current) return;
+
+    // 카카오 맵 SDK가 로드되었는지 확인
+    if (typeof window.kakao === 'undefined' || !window.kakao.maps) {
+      console.warn('카카오 맵 SDK가 로드되지 않았습니다.');
+      return;
+    }
+
+    // 기존 지도가 있으면 제거
+    if (mapRef.current) {
+      mapRef.current = null;
+    }
+
+    // 주소를 좌표로 변환
+    const geocoder = new window.kakao.maps.services.Geocoder();
+    geocoder.addressSearch(hotel.address, (result, status) => {
+      if (status === window.kakao.maps.services.Status.OK) {
+        const coords = new window.kakao.maps.LatLng(result[0].y, result[0].x);
+
+        // 지도 생성
+        const mapOption = {
+          center: coords,
+          level: 3, // 지도의 확대 레벨
+        };
+
+        const map = new window.kakao.maps.Map(mapContainerRef.current, mapOption);
+
+        // 마커 생성
+        const marker = new window.kakao.maps.Marker({
+          position: coords,
+        });
+        marker.setMap(map);
+
+        // 인포윈도우 생성
+        const infowindow = new window.kakao.maps.InfoWindow({
+          content: `<div style="width:150px;text-align:center;padding:6px 0;">${hotel.name}</div>`,
+        });
+        infowindow.open(map, marker);
+
+        mapRef.current = map;
+      } else {
+        console.error('주소 검색 실패:', status);
+      }
+    });
+  }, [hotel?.address, hotel?.name]);
 
   const handleHeartClick = () => {
     const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
@@ -865,23 +915,14 @@ const HotelDetail = () => {
       <section className="map-section">
         <h2 className="section-title">지도보기</h2>
         <div className="map-container">
-          <iframe
-            src={`https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6d-s6U4UZu3x9iY&q=${encodeURIComponent(hotel.address)}`}
-            width="100%"
-            height="400"
-            style={{ border: 0 }}
-            allowFullScreen=""
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-            title={`${hotel.name} 위치`}
-          ></iframe>
+          <div ref={mapContainerRef} className="kakao-map" style={{ width: '100%', height: '400px' }}></div>
           <a
-            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(hotel.address)}`}
+            href={`https://map.kakao.com/link/search/${encodeURIComponent(hotel.address)}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="view-google-maps"
+            className="view-kakao-maps"
           >
-            View on google maps
+            카카오맵에서 보기
           </a>
         </div>
         <p className="map-address">
