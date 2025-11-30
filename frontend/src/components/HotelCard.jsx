@@ -6,12 +6,27 @@ import './style/HotelCard.scss';
 const HotelCard = ({ hotel }) => {
   const navigate = useNavigate();
   const [isFavorited, setIsFavorited] = useState(false);
+  const [imageError, setImageError] = useState(false);
+  const [imageLoading, setImageLoading] = useState(true);
 
   // localStorage에서 찜한 숙소 목록 불러오기
   useEffect(() => {
     const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
     setIsFavorited(favorites.includes(hotel.id));
   }, [hotel.id]);
+
+  // 기본 이미지 URL
+  const defaultImage = 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80';
+  const imageUrl = imageError || !hotel.image ? defaultImage : hotel.image;
+
+  const handleImageError = () => {
+    setImageError(true);
+    setImageLoading(false);
+  };
+
+  const handleImageLoad = () => {
+    setImageLoading(false);
+  };
 
   const handleHeartClick = (e) => {
     e.stopPropagation();
@@ -45,8 +60,19 @@ const HotelCard = ({ hotel }) => {
   return (
     <div className="hotel-card">
       <div className="hotel-image-wrapper">
-        <img src={hotel.image} alt={hotel.name} className="hotel-image" />
-        <div className="image-badge">{hotel.imageCount} images</div>
+        {imageLoading && (
+          <div className="image-placeholder">
+            <span>{hotel.name}</span>
+          </div>
+        )}
+        <img
+          src={imageUrl}
+          alt={hotel.name}
+          className={`hotel-image ${imageLoading ? 'loading' : ''}`}
+          onError={handleImageError}
+          onLoad={handleImageLoad}
+        />
+        <div className="image-badge">{hotel.imageCount || 0} images</div>
         <button
           className={`heart-button ${isFavorited ? 'favorited' : ''}`}
           onClick={handleHeartClick}

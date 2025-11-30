@@ -21,10 +21,58 @@
     position: absolute;
     inset: 0;
     border-radius: 3.2rem;
-    background-image: linear-gradient(120deg, rgba(14, 34, 27, 0.65), rgba(18, 54, 44, 0.35)),
-      url('https://images.unsplash.com/photo-1501117716987-c8e1ecb210ab?auto=format&fit=crop&w=1600&q=80');
-    background-size: cover;
-    background-position: center;
+    overflow: hidden;
+
+    img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0;
+      transform: scale(1.02);
+      transition: opacity 0.8s ease-in-out, transform 8s ease-out;
+
+      &.active {
+        opacity: 1;
+        transform: scale(1.05);
+      }
+    }
+
+    .hero-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(120deg,
+          rgba(14, 34, 27, 0.7),
+          rgba(18, 54, 44, 0.4));
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .hero-indicators {
+      position: absolute;
+      right: 3.2rem;
+      bottom: 2.4rem;
+      display: flex;
+      gap: 0.8rem;
+      z-index: 2;
+
+      .indicator {
+        width: 0.9rem;
+        height: 0.9rem;
+        border-radius: 50%;
+        border: none;
+        padding: 0;
+        background: rgba(255, 255, 255, 0.45);
+        cursor: pointer;
+        transition: background 0.2s ease, transform 0.2s ease;
+
+        &.active {
+          background: #ffffff;
+          transform: scale(1.4);
+        }
+      }
+    }
   }
 
   .hero-content {
@@ -67,4 +115,3 @@
     }
   }
 }
-
