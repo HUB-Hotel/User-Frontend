@@ -315,13 +315,13 @@ const HotelDetail = () => {
   }, [id]);
 
   const allRooms = useMemo(() => generateRooms(parseInt(id)), [id]);
-  
+
   // 게스트 수에 따라 객실 필터링
   const filteredRooms = useMemo(() => {
     const totalGuests = guestOption.guests;
     return allRooms.filter(room => room.capacity >= totalGuests);
   }, [allRooms, guestOption.guests]);
-  
+
   const visibleRooms = useMemo(() => filteredRooms.slice(0, visibleRoomsCount), [filteredRooms, visibleRoomsCount]);
   const reviews = useMemo(() => generateReviews(parseInt(id)), [id]);
   const actualReviewCount = reviews.length;
@@ -338,7 +338,7 @@ const HotelDetail = () => {
   // 편의시설 목록
   const allAmenities = useMemo(() => {
     const amenities = [];
-    
+
     if (hotel?.amenities.pool) {
       amenities.push({ icon: MdPool, name: '야외 수영장' });
       amenities.push({ icon: MdPool, name: '실내 수영장' });
@@ -354,7 +354,7 @@ const HotelDetail = () => {
       amenities.push({ icon: FiWifi, name: '무료 Wi-Fi' });
     }
     amenities.push({ icon: MdCoffee, name: '티/커피 머신' });
-    
+
     // 추가 편의시설
     amenities.push({ icon: MdBusinessCenter, name: '비즈니스 센터' });
     amenities.push({ icon: MdLocalParking, name: '주차장' });
@@ -373,7 +373,7 @@ const HotelDetail = () => {
     amenities.push({ icon: MdSecurity, name: '보안 서비스' });
     amenities.push({ icon: MdSupportAgent, name: '컨시어지 서비스' });
     amenities.push({ icon: MdChildCare, name: '어린이 돌봄 서비스' });
-    
+
     return amenities;
   }, [hotel]);
 
@@ -381,9 +381,12 @@ const HotelDetail = () => {
     return showAllAmenities ? allAmenities : allAmenities.slice(0, 9);
   }, [allAmenities, showAllAmenities]);
 
+  // 기본 이미지 URL
+  const DEFAULT_IMAGE = 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80';
+
   // 이미지 갤러리 (더 많은 이미지 추가)
   const galleryImages = [
-    hotel?.image,
+    hotel?.image || DEFAULT_IMAGE,
     'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&w=800&q=80',
     'https://images.unsplash.com/photo-1611892440504-42a792e24d32?auto=format&fit=crop&w=800&q=80',
     'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=800&q=80',
@@ -392,7 +395,7 @@ const HotelDetail = () => {
     'https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=800&q=80',
     'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=800&q=80',
     'https://images.unsplash.com/photo-1596436889106-be35e843f974?auto=format&fit=crop&w=800&q=80',
-    'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=800&q=80',
+    'https://images.unsplash.com/photo-1582719508251-c38c1ae06fbb?auto=format&fit=crop&w=800&q=80',
   ];
 
   const paginatedReviews = useMemo(() => {
@@ -474,7 +477,7 @@ const HotelDetail = () => {
     if (checkOut) params.set('checkOut', format(checkOut, 'yyyy-MM-dd'));
     params.set('rooms', guestOption.rooms.toString());
     params.set('guests', guestOption.guests.toString());
-    
+
     navigate(`/hotel/${id}/booking/${roomId}?${params.toString()}`);
   };
 
@@ -509,7 +512,7 @@ const HotelDetail = () => {
     e.stopPropagation();
     const room = allRooms.find((r) => r.id === roomId);
     if (!room || !room.images) return;
-    
+
     const currentIndex = roomImageIndices[roomId] || 0;
     const nextIndex = (currentIndex + 1) % room.images.length;
     setRoomImageIndices({ ...roomImageIndices, [roomId]: nextIndex });
@@ -519,7 +522,7 @@ const HotelDetail = () => {
     e.stopPropagation();
     const room = allRooms.find((r) => r.id === roomId);
     if (!room || !room.images) return;
-    
+
     const currentIndex = roomImageIndices[roomId] || 0;
     const prevIndex = currentIndex === 0 ? room.images.length - 1 : currentIndex - 1;
     setRoomImageIndices({ ...roomImageIndices, [roomId]: prevIndex });
@@ -566,417 +569,438 @@ const HotelDetail = () => {
       <Header />
       <div className="hotel-detail-content">
 
-      {/* Breadcrumbs */}
-      <div className="breadcrumbs">
-        {(() => {
-          const parts = hotel.destination.split(',').map(s => s.trim());
-          const city = parts[0];
-          const country = parts[1] || '';
-          return (
-            <>
-              {country && <span>{country}</span>}
-              {country && <span className="separator">&gt;</span>}
-              <span>{city}</span>
-              <span className="separator">&gt;</span>
-              <span className="hotel-name-breadcrumb">{hotel.name}</span>
-            </>
-          );
-        })()}
-      </div>
+        {/* Breadcrumbs */}
+        <div className="breadcrumbs">
+          {(() => {
+            const parts = hotel.destination.split(',').map(s => s.trim());
+            const city = parts[0];
+            const country = parts[1] || '';
+            return (
+              <>
+                {country && <span>{country}</span>}
+                {country && <span className="separator">&gt;</span>}
+                <span>{city}</span>
+                <span className="separator">&gt;</span>
+                <span className="hotel-name-breadcrumb">{hotel.name}</span>
+              </>
+            );
+          })()}
+        </div>
 
-      {/* Header Section */}
-      <div className="hotel-header">
-        <div className="hotel-header-left">
-          <div className="hotel-title-section">
-            <h1 className="hotel-name">{hotel.name}</h1>
-            <div className="hotel-stars">{renderStars(hotel.starRating)}</div>
-          </div>
-          <div className="hotel-rating-section">
-            <span className="rating-score">{hotel.reviewScore}</span>
-            <span className="rating-text">{hotel.reviewText}</span>
-            <span className="rating-count">{actualReviewCount}개 리뷰</span>
-          </div>
-          <p className="hotel-address">
-            <FiMapPin /> {hotel.address}
-          </p>
-        </div>
-        <div className="hotel-header-right">
-          <div className="header-actions">
-            <button className="icon-button" onClick={handleHeartClick}>
-              <FiHeart className={isFavorited ? 'favorited' : ''} />
-            </button>
-            <button className="icon-button">
-              <FiShare2 />
-            </button>
-          </div>
-          <div className="price-section">
-            <span className="price">₩{hotel.price.toLocaleString()}/night</span>
-            <button className="btn primary book-button" onClick={handleBookButtonClick}>예약하기</button>
-          </div>
-        </div>
-      </div>
-
-      {/* Image Gallery */}
-      <div className="image-gallery">
-        <div className="main-image">
-          <img src={galleryImages[0]} alt={hotel.name} />
-        </div>
-        <div className="thumbnail-grid">
-          {galleryImages.slice(1, 5).map((img, idx) => (
-            <div key={idx} className="thumbnail">
-              <img src={img} alt={`${hotel.name} ${idx + 2}`} />
+        {/* Header Section */}
+        <div className="hotel-header">
+          <div className="hotel-header-left">
+            <div className="hotel-title-section">
+              <h1 className="hotel-name">{hotel.name}</h1>
+              <div className="hotel-stars">{renderStars(hotel.starRating)}</div>
             </div>
-          ))}
-          <div className="thumbnail view-all" onClick={() => setIsGalleryOpen(true)}>
-            <span>더보기</span>
+            <div className="hotel-rating-section">
+              <span className="rating-score">{hotel.reviewScore}</span>
+              <span className="rating-text">{hotel.reviewText}</span>
+              <span className="rating-count">{actualReviewCount}개 리뷰</span>
+            </div>
+            <p className="hotel-address">
+              <FiMapPin /> {hotel.address}
+            </p>
+          </div>
+          <div className="hotel-header-right">
+            <div className="header-actions">
+              <button className="icon-button" onClick={handleHeartClick}>
+                <FiHeart className={isFavorited ? 'favorited' : ''} />
+              </button>
+              <button className="icon-button">
+                <FiShare2 />
+              </button>
+            </div>
+            <div className="price-section">
+              <span className="price">₩{hotel.price.toLocaleString()}/night</span>
+              <button className="btn primary book-button" onClick={handleBookButtonClick}>예약하기</button>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Overview Section */}
-      <section className="overview-section">
-        <h2 className="section-title">개요</h2>
-        <p className="overview-text">
-          {hotel.name}은(는) {hotel.destination}에 위치한 {hotel.starRating}성급 호텔입니다. 
-          편안한 숙박과 훌륭한 서비스를 제공하며, 비즈니스 여행객과 레저 여행객 모두에게 적합합니다. 
-          현대적인 시설과 친절한 직원들이 여러분의 만족스러운 체류를 보장합니다.
-        </p>
-      </section>
-
-      {/* Available Rooms Section */}
-      <section className="rooms-section" ref={roomsSectionRef}>
-        <h2 className="section-title">잔여 객실</h2>
-        
-        {/* 날짜 및 게스트 선택 박스 */}
-        <div className="room-booking-selector">
-          <div className="date-range-wrapper" ref={checkInFieldRef}>
-            <div className="date-range-container">
-              <div className="field">
-                <FiCalendar />
-                <div className="field-content">
-                  <span>체크인</span>
-                  <button className="date-toggle" type="button" onClick={handleCalendarOpen}>
-                    {formattedCheckIn}
-                  </button>
-                </div>
-              </div>
-              <div className="field" ref={checkOutFieldRef}>
-                <FiCalendar />
-                <div className="field-content">
-                  <span>체크아웃</span>
-                  <button className="date-toggle" type="button" onClick={handleCalendarOpen}>
-                    {formattedCheckOut}
-                  </button>
-                </div>
-              </div>
-            </div>
-            {isCalendarOpen ? (
-              <div
-                className="calendar-dropdown"
-                ref={calendarRef}
-                onMouseDown={(event) => event.stopPropagation()}
-              >
-                <DayPicker
-                  mode="range"
-                  selected={dateRange}
-                  onSelect={handleCalendarChange}
-                  numberOfMonths={2}
-                  locale={ko}
-                  disabled={{ before: new Date() }}
-                  className="rdp"
+        {/* Image Gallery */}
+        <div className="image-gallery">
+          <div className="main-image">
+            <img
+              src={galleryImages[0]}
+              alt={hotel.name}
+              onError={(e) => {
+                e.target.src = DEFAULT_IMAGE;
+              }}
+            />
+          </div>
+          <div className="thumbnail-grid">
+            {galleryImages.slice(1, 5).map((img, idx) => (
+              <div key={idx} className="thumbnail">
+                <img
+                  src={img}
+                  alt={`${hotel.name} ${idx + 2}`}
+                  onError={(e) => {
+                    e.target.src = DEFAULT_IMAGE;
+                  }}
                 />
-                <div className="calendar-actions">
-                  <button className="btn reset" type="button" onClick={handleResetDates}>
-                    초기화
-                  </button>
-                  <button className="btn primary apply" type="button" onClick={handleApplyDates}>
+              </div>
+            ))}
+            <div className="thumbnail view-all" onClick={() => setIsGalleryOpen(true)}>
+              <span>더보기</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Overview Section */}
+        <section className="overview-section">
+          <h2 className="section-title">개요</h2>
+          <p className="overview-text">
+            {hotel.name}은(는) {hotel.destination}에 위치한 {hotel.starRating}성급 호텔입니다.
+            편안한 숙박과 훌륭한 서비스를 제공하며, 비즈니스 여행객과 레저 여행객 모두에게 적합합니다.
+            현대적인 시설과 친절한 직원들이 여러분의 만족스러운 체류를 보장합니다.
+          </p>
+        </section>
+
+        {/* Available Rooms Section */}
+        <section className="rooms-section" ref={roomsSectionRef}>
+          <h2 className="section-title">잔여 객실</h2>
+
+          {/* 날짜 및 게스트 선택 박스 */}
+          <div className="room-booking-selector">
+            <div className="date-range-wrapper" ref={checkInFieldRef}>
+              <div className="date-range-container">
+                <div className="field">
+                  <FiCalendar />
+                  <div className="field-content">
+                    <span>체크인</span>
+                    <button className="date-toggle" type="button" onClick={handleCalendarOpen}>
+                      {formattedCheckIn}
+                    </button>
+                  </div>
+                </div>
+                <div className="field" ref={checkOutFieldRef}>
+                  <FiCalendar />
+                  <div className="field-content">
+                    <span>체크아웃</span>
+                    <button className="date-toggle" type="button" onClick={handleCalendarOpen}>
+                      {formattedCheckOut}
+                    </button>
+                  </div>
+                </div>
+              </div>
+              {isCalendarOpen ? (
+                <div
+                  className="calendar-dropdown"
+                  ref={calendarRef}
+                  onMouseDown={(event) => event.stopPropagation()}
+                >
+                  <DayPicker
+                    mode="range"
+                    selected={dateRange}
+                    onSelect={handleCalendarChange}
+                    numberOfMonths={2}
+                    locale={ko}
+                    disabled={{ before: new Date() }}
+                    className="rdp"
+                  />
+                  <div className="calendar-actions">
+                    <button className="btn reset" type="button" onClick={handleResetDates}>
+                      초기화
+                    </button>
+                    <button className="btn primary apply" type="button" onClick={handleApplyDates}>
+                      완료
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+            <div className="field" ref={guestRef}>
+              <FiUsers />
+              <div className="field-content">
+                <span>객실 및 투숙객</span>
+                <button
+                  className="guest-button"
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setGuestOpen((prev) => !prev);
+                    setCalendarOpen(false);
+                  }}
+                  onMouseDown={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                  }}
+                >
+                  객실 {guestOption.rooms}개, 투숙객 {guestOption.guests}명
+                </button>
+              </div>
+              {isGuestOpen ? (
+                <div
+                  className="guest-dropdown"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <div className="guest-row">
+                    <span className="guest-label">객실</span>
+                    <div className="counter-controls">
+                      <button
+                        className="counter-button"
+                        type="button"
+                        onClick={() =>
+                          setGuestOption((prev) => ({
+                            ...prev,
+                            rooms: Math.max(1, prev.rooms - 1),
+                          }))
+                        }
+                      >
+                        -
+                      </button>
+                      <span>{guestOption.rooms}</span>
+                      <button
+                        className="counter-button"
+                        type="button"
+                        onClick={() =>
+                          setGuestOption((prev) => ({
+                            ...prev,
+                            rooms: prev.rooms + 1,
+                          }))
+                        }
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                  <div className="guest-row">
+                    <span className="guest-label">투숙객</span>
+                    <div className="counter-controls">
+                      <button
+                        className="counter-button"
+                        type="button"
+                        onClick={() =>
+                          setGuestOption((prev) => ({
+                            ...prev,
+                            guests: Math.max(1, prev.guests - 1),
+                          }))
+                        }
+                      >
+                        -
+                      </button>
+                      <span>{guestOption.guests}</span>
+                      <button
+                        className="counter-button"
+                        type="button"
+                        onClick={() =>
+                          setGuestOption((prev) => ({
+                            ...prev,
+                            guests: prev.guests + 1,
+                          }))
+                        }
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                  <button className="btn primary apply" type="button" onClick={handleApplyGuests}>
                     완료
                   </button>
                 </div>
-              </div>
-            ) : null}
-          </div>
-          <div className="field" ref={guestRef}>
-            <FiUsers />
-            <div className="field-content">
-              <span>객실 및 투숙객</span>
-              <button
-                className="guest-button"
-                type="button"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  setGuestOpen((prev) => !prev);
-                  setCalendarOpen(false);
-                }}
-                onMouseDown={(event) => {
-                  event.preventDefault();
-                  event.stopPropagation();
-                }}
-              >
-                객실 {guestOption.rooms}개, 투숙객 {guestOption.guests}명
-              </button>
+              ) : null}
             </div>
-            {isGuestOpen ? (
-              <div
-                className="guest-dropdown"
-                onClick={(event) => event.stopPropagation()}
-              >
-                <div className="guest-row">
-                  <span className="guest-label">객실</span>
-                  <div className="counter-controls">
-                    <button
-                      className="counter-button"
-                      type="button"
-                      onClick={() =>
-                        setGuestOption((prev) => ({
-                          ...prev,
-                          rooms: Math.max(1, prev.rooms - 1),
-                        }))
-                      }
-                    >
-                      -
-                    </button>
-                    <span>{guestOption.rooms}</span>
-                    <button
-                      className="counter-button"
-                      type="button"
-                      onClick={() =>
-                        setGuestOption((prev) => ({
-                          ...prev,
-                          rooms: prev.rooms + 1,
-                        }))
-                      }
-                    >
-                      +
-                    </button>
-                  </div>
-                </div>
-                <div className="guest-row">
-                  <span className="guest-label">투숙객</span>
-                  <div className="counter-controls">
-                    <button
-                      className="counter-button"
-                      type="button"
-                      onClick={() =>
-                        setGuestOption((prev) => ({
-                          ...prev,
-                          guests: Math.max(1, prev.guests - 1),
-                        }))
-                      }
-                    >
-                      -
-                    </button>
-                    <span>{guestOption.guests}</span>
-                    <button
-                      className="counter-button"
-                      type="button"
-                      onClick={() =>
-                        setGuestOption((prev) => ({
-                          ...prev,
-                          guests: prev.guests + 1,
-                        }))
-                      }
-                    >
-                      +
-                    </button>
-                  </div>
-                </div>
-                <button className="btn primary apply" type="button" onClick={handleApplyGuests}>
-                  완료
-                </button>
-              </div>
-            ) : null}
           </div>
-        </div>
 
-        <div className="rooms-grid">
-          {visibleRooms.map((room) => (
-            <div key={room.id} className="room-card" onClick={() => handleRoomClick(room)}>
-              <div className="room-image-wrapper">
-                {room.images && room.images.length > 1 ? (
-                  <>
+          <div className="rooms-grid">
+            {visibleRooms.map((room) => (
+              <div key={room.id} className="room-card" onClick={() => handleRoomClick(room)}>
+                <div className="room-image-wrapper">
+                  {room.images && room.images.length > 1 ? (
+                    <>
+                      <div className="room-image">
+                        <img
+                          src={room.images[roomImageIndices[room.id] || 0] || DEFAULT_IMAGE}
+                          alt={room.name}
+                          onError={(e) => {
+                            e.target.src = DEFAULT_IMAGE;
+                          }}
+                        />
+                      </div>
+                      <button
+                        className="room-image-nav room-image-prev"
+                        onClick={(e) => handleRoomImagePrev(room.id, e)}
+                      >
+                        <FiChevronLeft />
+                      </button>
+                      <button
+                        className="room-image-nav room-image-next"
+                        onClick={(e) => handleRoomImageNext(room.id, e)}
+                      >
+                        <FiChevronRight />
+                      </button>
+                      <button
+                        className="room-image-more"
+                        onClick={(e) => handleRoomImageMore(room, e)}
+                      >
+                        더보기
+                      </button>
+                      <div className="room-image-indicator">
+                        {(roomImageIndices[room.id] || 0) + 1} / {room.images.length}
+                      </div>
+                    </>
+                  ) : (
                     <div className="room-image">
-                      <img 
-                        src={room.images[roomImageIndices[room.id] || 0]} 
-                        alt={room.name} 
+                      <img
+                        src={room.image || DEFAULT_IMAGE}
+                        alt={room.name}
+                        onError={(e) => {
+                          e.target.src = DEFAULT_IMAGE;
+                        }}
                       />
                     </div>
-                    <button 
-                      className="room-image-nav room-image-prev"
-                      onClick={(e) => handleRoomImagePrev(room.id, e)}
-                    >
-                      <FiChevronLeft />
-                    </button>
-                    <button 
-                      className="room-image-nav room-image-next"
-                      onClick={(e) => handleRoomImageNext(room.id, e)}
-                    >
-                      <FiChevronRight />
-                    </button>
-                    <button 
-                      className="room-image-more"
-                      onClick={(e) => handleRoomImageMore(room, e)}
-                    >
-                      더보기
-                    </button>
-                    <div className="room-image-indicator">
-                      {(roomImageIndices[room.id] || 0) + 1} / {room.images.length}
-                    </div>
-                  </>
-                ) : (
-                  <div className="room-image">
-                    <img src={room.image} alt={room.name} />
+                  )}
+                </div>
+                <div className="room-info">
+                  <h3 className="room-name">{room.name}</h3>
+                  <p className="room-description">{room.description}</p>
+                  <div className="room-details">
+                    <span><FiUsers /> 침실 {room.bedrooms}개</span>
+                    <span><FiUsers /> 침대 {room.beds}개</span>
+                    <span><FiUsers /> 욕실 {room.bathrooms}개</span>
                   </div>
-                )}
-              </div>
-              <div className="room-info">
-                <h3 className="room-name">{room.name}</h3>
-                <p className="room-description">{room.description}</p>
-                <div className="room-details">
-                  <span><FiUsers /> 침실 {room.bedrooms}개</span>
-                  <span><FiUsers /> 침대 {room.beds}개</span>
-                  <span><FiUsers /> 욕실 {room.bathrooms}개</span>
-                </div>
-                <div className="room-capacity">
-                  <span><FiUsers /> 최대 {room.capacity}명 / 기준 {room.capacityStandard}명</span>
-                </div>
-                <div className="room-check-times">
-                  <span><FiClock /> 체크인: {room.checkIn}</span>
-                  <span><FiClock /> 체크아웃: {room.checkOut}</span>
-                </div>
-                <div className="room-price-section">
-                  <span className="room-price">₩{room.price.toLocaleString()}/night</span>
-                  <button className="btn primary" onClick={(e) => handleRoomBooking(room.id, e)}>예약하기</button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-        {visibleRoomsCount < filteredRooms.length && (
-          <div className="rooms-load-more">
-            <span className="load-more-text" onClick={handleLoadMoreRooms}>
-              더보기
-            </span>
-          </div>
-        )}
-      </section>
-
-      {/* Map Section */}
-      <section className="map-section">
-        <h2 className="section-title">지도보기</h2>
-        <div className="map-container">
-          <iframe
-            src={`https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6d-s6U4UZu3x9iY&q=${encodeURIComponent(hotel.address)}`}
-            width="100%"
-            height="400"
-            style={{ border: 0 }}
-            allowFullScreen=""
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-            title={`${hotel.name} 위치`}
-          ></iframe>
-          <a
-            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(hotel.address)}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="view-google-maps"
-          >
-            View on google maps
-          </a>
-        </div>
-        <p className="map-address">
-          <FiMapPin /> {hotel.address}
-        </p>
-      </section>
-
-      {/* Amenities Section */}
-      <section className="amenities-section">
-        <h2 className="section-title">편의시설</h2>
-        <div className="amenities-grid">
-          {visibleAmenities.map((amenity, idx) => {
-            const IconComponent = amenity.icon;
-            return (
-              <div key={idx} className="amenity-item">
-                <IconComponent className="amenity-icon" />
-                <span>{amenity.name}</span>
-              </div>
-            );
-          })}
-          {!showAllAmenities && allAmenities.length > 9 && (
-            <div 
-              className="amenity-item more"
-              onClick={() => setShowAllAmenities(true)}
-            >
-              <span>+{allAmenities.length - 9}개 더보기</span>
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* Reviews Section */}
-      <section className="reviews-section">
-        <h2 className="section-title">리뷰</h2>
-        <div className="reviews-header">
-          {/* 해시태그 형식의 특징 */}
-          <div className="features-tags">
-            <div className="main-rating-card">
-              <div className="rating-score-large">{hotel.reviewScore}</div>
-              <div className="rating-text-large">{hotel.reviewText}</div>
-              <div className="rating-count-small">{actualReviewCount}개 리뷰</div>
-            </div>
-            {hotelFeatures.map((feature) => (
-              <div key={feature.id} className="feature-tag">
-                <span className="tag-text">{feature.tag}</span>
-                <div className="tag-rating">
-                  <span className="tag-rating-score">{feature.rating}</span>
-                  <span className="tag-rating-text">{hotel.reviewText}</span>
-                  <span className="tag-rating-count">{actualReviewCount}개 리뷰</span>
+                  <div className="room-capacity">
+                    <span><FiUsers /> 최대 {room.capacity}명 / 기준 {room.capacityStandard}명</span>
+                  </div>
+                  <div className="room-check-times">
+                    <span><FiClock /> 체크인: {room.checkIn}</span>
+                    <span><FiClock /> 체크아웃: {room.checkOut}</span>
+                  </div>
+                  <div className="room-price-section">
+                    <span className="room-price">₩{room.price.toLocaleString()}/night</span>
+                    <button className="btn primary" onClick={(e) => handleRoomBooking(room.id, e)}>예약하기</button>
+                  </div>
                 </div>
               </div>
             ))}
           </div>
-          <button className="btn secondary">리뷰 작성하기</button>
-        </div>
-        <div className="reviews-list">
-          {paginatedReviews.map((review) => (
-            <div key={review.id} className="review-item">
-              <div className="review-header">
-                <img src={review.userAvatar} alt={review.userName} className="review-avatar" />
-                <div className="review-user-info">
-                  <span className="review-user-name">{review.userName}</span>
-                  <div className="review-rating">
-                    <span className="review-rating-score">{review.rating}</span>
-                    <span className="review-rating-text">{review.ratingText}</span>
+          {visibleRoomsCount < filteredRooms.length && (
+            <div className="rooms-load-more">
+              <span className="load-more-text" onClick={handleLoadMoreRooms}>
+                더보기
+              </span>
+            </div>
+          )}
+        </section>
+
+        {/* Map Section */}
+        <section className="map-section">
+          <h2 className="section-title">지도보기</h2>
+          <div className="map-container">
+            <iframe
+              src={`https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6d-s6U4UZu3x9iY&q=${encodeURIComponent(hotel.address)}`}
+              width="100%"
+              height="400"
+              style={{ border: 0 }}
+              allowFullScreen=""
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              title={`${hotel.name} 위치`}
+            ></iframe>
+            <a
+              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(hotel.address)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="view-google-maps"
+            >
+              View on google maps
+            </a>
+          </div>
+          <p className="map-address">
+            <FiMapPin /> {hotel.address}
+          </p>
+        </section>
+
+        {/* Amenities Section */}
+        <section className="amenities-section">
+          <h2 className="section-title">편의시설</h2>
+          <div className="amenities-grid">
+            {visibleAmenities.map((amenity, idx) => {
+              const IconComponent = amenity.icon;
+              return (
+                <div key={idx} className="amenity-item">
+                  <IconComponent className="amenity-icon" />
+                  <span>{amenity.name}</span>
+                </div>
+              );
+            })}
+            {!showAllAmenities && allAmenities.length > 9 && (
+              <div
+                className="amenity-item more"
+                onClick={() => setShowAllAmenities(true)}
+              >
+                <span>+{allAmenities.length - 9}개 더보기</span>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* Reviews Section */}
+        <section className="reviews-section">
+          <h2 className="section-title">리뷰</h2>
+          <div className="reviews-header">
+            {/* 해시태그 형식의 특징 */}
+            <div className="features-tags">
+              <div className="main-rating-card">
+                <div className="rating-score-large">{hotel.reviewScore}</div>
+                <div className="rating-text-large">{hotel.reviewText}</div>
+                <div className="rating-count-small">{actualReviewCount}개 리뷰</div>
+              </div>
+              {hotelFeatures.map((feature) => (
+                <div key={feature.id} className="feature-tag">
+                  <span className="tag-text">{feature.tag}</span>
+                  <div className="tag-rating">
+                    <span className="tag-rating-score">{feature.rating}</span>
+                    <span className="tag-rating-text">{hotel.reviewText}</span>
+                    <span className="tag-rating-count">{actualReviewCount}개 리뷰</span>
                   </div>
                 </div>
-              </div>
-              <p className="review-text">{review.review}</p>
-              <span className="review-date">{review.date}</span>
+              ))}
             </div>
-          ))}
-        </div>
-        {totalReviewPages > 1 && (
-          <div className="reviews-pagination">
-            <button
-              className="pagination-button"
-              onClick={() => setCurrentReviewPage((prev) => Math.max(1, prev - 1))}
-              disabled={currentReviewPage === 1}
-            >
-              &lt;
-            </button>
-            <span className="pagination-info">
-              {currentReviewPage} / {totalReviewPages}
-            </span>
-            <button
-              className="pagination-button"
-              onClick={() => setCurrentReviewPage((prev) => Math.min(totalReviewPages, prev + 1))}
-              disabled={currentReviewPage === totalReviewPages}
-            >
-              &gt;
-            </button>
+            <button className="btn secondary">리뷰 작성하기</button>
           </div>
-        )}
-      </section>
+          <div className="reviews-list">
+            {paginatedReviews.map((review) => (
+              <div key={review.id} className="review-item">
+                <div className="review-header">
+                  <img src={review.userAvatar} alt={review.userName} className="review-avatar" />
+                  <div className="review-user-info">
+                    <span className="review-user-name">{review.userName}</span>
+                    <div className="review-rating">
+                      <span className="review-rating-score">{review.rating}</span>
+                      <span className="review-rating-text">{review.ratingText}</span>
+                    </div>
+                  </div>
+                </div>
+                <p className="review-text">{review.review}</p>
+                <span className="review-date">{review.date}</span>
+              </div>
+            ))}
+          </div>
+          {totalReviewPages > 1 && (
+            <div className="reviews-pagination">
+              <button
+                className="pagination-button"
+                onClick={() => setCurrentReviewPage((prev) => Math.max(1, prev - 1))}
+                disabled={currentReviewPage === 1}
+              >
+                &lt;
+              </button>
+              <span className="pagination-info">
+                {currentReviewPage} / {totalReviewPages}
+              </span>
+              <button
+                className="pagination-button"
+                onClick={() => setCurrentReviewPage((prev) => Math.min(totalReviewPages, prev + 1))}
+                disabled={currentReviewPage === totalReviewPages}
+              >
+                &gt;
+              </button>
+            </div>
+          )}
+        </section>
       </div>
 
       {/* Room Detail Modal */}
@@ -986,7 +1010,13 @@ const HotelDetail = () => {
             <button className="modal-close" onClick={closeRoomModal}>×</button>
             <div className="room-modal-content">
               <div className="room-modal-image">
-                <img src={selectedRoom.image} alt={selectedRoom.name} />
+                <img
+                  src={selectedRoom.image || DEFAULT_IMAGE}
+                  alt={selectedRoom.name}
+                  onError={(e) => {
+                    e.target.src = DEFAULT_IMAGE;
+                  }}
+                />
               </div>
               <div className="room-modal-info">
                 <h2>{selectedRoom.name}</h2>
@@ -1042,7 +1072,13 @@ const HotelDetail = () => {
             <div className="gallery-modal-content">
               {galleryImages.map((img, idx) => (
                 <div key={idx} className="gallery-modal-image">
-                  <img src={img} alt={`${hotel.name} ${idx + 1}`} />
+                  <img
+                    src={img || DEFAULT_IMAGE}
+                    alt={`${hotel.name} ${idx + 1}`}
+                    onError={(e) => {
+                      e.target.src = DEFAULT_IMAGE;
+                    }}
+                  />
                 </div>
               ))}
             </div>
@@ -1061,7 +1097,13 @@ const HotelDetail = () => {
             <div className="gallery-modal-content">
               {selectedRoomImages.images?.map((img, idx) => (
                 <div key={idx} className="gallery-modal-image">
-                  <img src={img} alt={`${selectedRoomImages.name} ${idx + 1}`} />
+                  <img
+                    src={img || DEFAULT_IMAGE}
+                    alt={`${selectedRoomImages.name} ${idx + 1}`}
+                    onError={(e) => {
+                      e.target.src = DEFAULT_IMAGE;
+                    }}
+                  />
                 </div>
               ))}
             </div>
