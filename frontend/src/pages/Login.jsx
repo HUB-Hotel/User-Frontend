@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { FiEye, FiEyeOff } from 'react-icons/fi';
 import { FaFacebook, FaGoogle, FaApple } from 'react-icons/fa';
@@ -11,6 +11,21 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  const slides = [
+    'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=1200&q=80',
+  ];
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % slides.length);
+    }, 5000);
+
+    return () => clearInterval(timer);
+  }, [slides.length]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -118,14 +133,24 @@ const Login = () => {
 
         <div className="auth-image-section">
           <div className="image-carousel">
-            <img
-              src="https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80"
-              alt="Resort"
-            />
+            {slides.map((src, index) => (
+              <img
+                key={src}
+                src={src}
+                alt={`Resort ${index + 1}`}
+                className={index === currentSlide ? 'active' : ''}
+              />
+            ))}
             <div className="carousel-indicators">
-              <span className="indicator active"></span>
-              <span className="indicator"></span>
-              <span className="indicator"></span>
+              {slides.map((_, index) => (
+                <button
+                  key={index}
+                  type="button"
+                  className={`indicator ${index === currentSlide ? 'active' : ''}`}
+                  onClick={() => setCurrentSlide(index)}
+                  aria-label={`이미지 ${index + 1} 보기`}
+                ></button>
+              ))}
             </div>
           </div>
         </div>
