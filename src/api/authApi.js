@@ -14,10 +14,9 @@ export const login = async ({ email, password }) => {
 };
 
 // 회원가입
-// 기존: firstName, lastName → 통합: name
 export const signup = async ({ name, email, phone, password }) => {
   const { data } = await api.post('/auth/register', {
-    name,
+    displayName: name,
     email,
     phone,
     password,

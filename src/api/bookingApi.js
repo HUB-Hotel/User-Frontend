@@ -12,7 +12,7 @@ export const createBooking = async (bookingData) => {
 
 // 예약 내역 조회
 export const getBookings = async () => {
-  const { data } = await api.get('/bookings');
+  const { data } = await api.get('/bookings/me');
   return data;
 };
 
@@ -24,7 +24,7 @@ export const getBookingDetail = async (bookingId) => {
 
 // 예약 취소
 export const cancelBooking = async (bookingId) => {
-  const { data } = await api.delete(`/bookings/${bookingId}`);
+  const { data } = await api.patch(`/bookings/${bookingId}/cancel`);
   return data;
 };
 

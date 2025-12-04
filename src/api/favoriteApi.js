@@ -6,19 +6,19 @@ import api from './client';
 
 // 찜한 숙소 목록 조회
 export const getFavorites = async () => {
-  const { data } = await api.get('/favorites');
+  const { data } = await api.get('/bookmarks');
   return data;
 };
 
-// 찜하기 추가
+// 찜하기 추가/삭제 (토글)
 export const addFavorite = async (hotelId) => {
-  const { data } = await api.post('/favorites', { hotelId });
+  const { data } = await api.post(`/bookmarks/${hotelId}`);
   return data;
 };
 
-// 찜하기 삭제
+// 찜하기 삭제 (토글과 동일)
 export const removeFavorite = async (hotelId) => {
-  const { data } = await api.delete(`/favorites/${hotelId}`);
+  const { data } = await api.post(`/bookmarks/${hotelId}`);
   return data;
 };
 

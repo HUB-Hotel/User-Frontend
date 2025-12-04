@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { FiEye, FiEyeOff } from 'react-icons/fi';
 import { FaFacebook, FaGoogle, FaApple } from 'react-icons/fa';
+import { login } from '../api/authApi';
+import { getErrorMessage } from '../api/client';
 import './style/Login.scss';
 
 const Login = () => {
@@ -27,20 +29,30 @@ const Login = () => {
     return () => clearInterval(timer);
   }, [slides.length]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
-    // 로그인 검증: id는 1111, 비밀번호는 1111
-    if (email === '1111' && password === '1111') {
-      // 로그인 성공
-      localStorage.setItem('isLoggedIn', 'true');
-      localStorage.setItem('userEmail', email);
-      // 로그인 상태 변경 이벤트 발생
-      window.dispatchEvent(new Event('storage'));
-      navigate('/');
-    } else {
-      setError('이메일 또는 비밀번호가 올바르지 않습니다.');
+    try {
+      // 실제 로그인 API 호출
+      const response = await login({ email, password });
+
+      // 로그인 성공 시 토큰 및 사용자 정보 저장
+      // Backend 응답: { data: { user, token }, message: "...", resultCode: 200 }
+      if (response.data?.token || (response.data?.data && response.data.data.token)) {
+        const token = response.data?.token || response.data?.data?.token;
+        const user = response.data?.user || response.data?.data?.user || response.data?.data;
+        
+        localStorage.setItem('token', token);
+        localStorage.setItem('isLoggedIn', 'true');
+        if (user) {
+          localStorage.setItem('userInfo', JSON.stringify(user));
+        }
+        window.dispatchEvent(new Event('loginStatusChanged'));
+        navigate('/');
+      }
+    } catch (err) {
+      setError(getErrorMessage(err, '이메일 또는 비밀번호가 올바르지 않습니다.'));
     }
   };
 

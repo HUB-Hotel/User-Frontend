@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { FiEye, FiEyeOff } from 'react-icons/fi';
 import { FaFacebook, FaGoogle, FaApple } from 'react-icons/fa';
+import { signup, login } from '../api/authApi';
+import { getErrorMessage } from '../api/client';
 import './style/Login.scss';
 
 const SignUp = () => {
@@ -26,7 +28,7 @@ const SignUp = () => {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
@@ -40,10 +42,46 @@ const SignUp = () => {
       return;
     }
 
-    // 회원가입 성공
-    localStorage.setItem('isLoggedIn', 'true');
-    localStorage.setItem('userEmail', formData.email);
-    navigate('/');
+    try {
+      // 실제 회원가입 API 호출
+      const name = `${formData.firstName} ${formData.lastName}`.trim();
+      const response = await signup({
+        name,
+        email: formData.email,
+        phone: formData.phone,
+        password: formData.password,
+      });
+
+      // 회원가입 성공 시 (Backend 응답: { data: {...}, message: "...", resultCode: 201 })
+      if (response.data) {
+        // 회원가입 후 자동 로그인을 위해 로그인 API 호출
+        try {
+          const loginResponse = await login({ 
+            email: formData.email, 
+            password: formData.password 
+          });
+          
+          // Backend 응답: { data: { user, token }, message: "...", resultCode: 200 }
+          const token = loginResponse.data?.token || loginResponse.data?.data?.token;
+          const user = loginResponse.data?.user || loginResponse.data?.data?.user || loginResponse.data?.data;
+          
+          if (token) {
+            localStorage.setItem('token', token);
+            localStorage.setItem('isLoggedIn', 'true');
+            if (user) {
+              localStorage.setItem('userInfo', JSON.stringify(user));
+            }
+            window.dispatchEvent(new Event('loginStatusChanged'));
+            navigate('/');
+          }
+        } catch (loginErr) {
+          // 회원가입은 성공했지만 로그인 실패 시 로그인 페이지로 이동
+          navigate('/login');
+        }
+      }
+    } catch (err) {
+      setError(getErrorMessage(err, '회원가입에 실패했습니다.'));
+    }
   };
 
   return (
