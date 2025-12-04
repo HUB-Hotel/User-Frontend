@@ -309,6 +309,8 @@ const HotelDetail = () => {
   const calendarRef = useRef(null);
   const guestRef = useRef(null);
   const roomsSectionRef = useRef(null);
+  const mapContainerRef = useRef(null);
+  const mapRef = useRef(null);
 
   const hotel = useMemo(() => {
     return allHotelsData.find((h) => h.id === parseInt(id));
@@ -486,6 +488,54 @@ const HotelDetail = () => {
     const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
     setIsFavorited(favorites.includes(hotel?.id));
   }, [hotel?.id]);
+
+  // 카카오 맵 초기화
+  useEffect(() => {
+    if (!hotel?.address || !mapContainerRef.current) return;
+
+    // 카카오 맵 SDK가 로드되었는지 확인
+    if (typeof window.kakao === 'undefined' || !window.kakao.maps) {
+      console.warn('카카오 맵 SDK가 로드되지 않았습니다.');
+      return;
+    }
+
+    // 기존 지도가 있으면 제거
+    if (mapRef.current) {
+      mapRef.current = null;
+    }
+
+    // 주소를 좌표로 변환
+    const geocoder = new window.kakao.maps.services.Geocoder();
+    geocoder.addressSearch(hotel.address, (result, status) => {
+      if (status === window.kakao.maps.services.Status.OK) {
+        const coords = new window.kakao.maps.LatLng(result[0].y, result[0].x);
+
+        // 지도 생성
+        const mapOption = {
+          center: coords,
+          level: 3, // 지도의 확대 레벨
+        };
+
+        const map = new window.kakao.maps.Map(mapContainerRef.current, mapOption);
+
+        // 마커 생성
+        const marker = new window.kakao.maps.Marker({
+          position: coords,
+        });
+        marker.setMap(map);
+
+        // 인포윈도우 생성
+        const infowindow = new window.kakao.maps.InfoWindow({
+          content: `<div style="width:150px;text-align:center;padding:6px 0;">${hotel.name}</div>`,
+        });
+        infowindow.open(map, marker);
+
+        mapRef.current = map;
+      } else {
+        console.error('주소 검색 실패:', status);
+      }
+    });
+  }, [hotel?.address, hotel?.name]);
 
   const handleHeartClick = () => {
     const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');

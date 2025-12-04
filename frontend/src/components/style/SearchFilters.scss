@@ -3,7 +3,7 @@
 .search-filters {
   background: var(--bg);
   border-radius: var(--radius-m);
-  padding: 2.4rem;
+  padding: 2rem 1.6rem;
   box-shadow: var(--shadow-soft);
   height: fit-content;
   position: sticky;
@@ -13,7 +13,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 2.4rem;
+    margin-bottom: 2rem;
   }
 
   .filters-title {
@@ -43,7 +43,7 @@
 }
 
 .filter-section {
-  margin-bottom: 2.4rem;
+  margin-bottom: 2rem;
 
   &:last-child {
     margin-bottom: 0;
@@ -198,15 +198,14 @@
     color: var(--primary);
     background: var(--surface);
     transform: translateX(0.3rem);
-    
+
     input[type='checkbox'] {
       transform: scale(1.1);
     }
   }
 
-  input[type='checkbox']:checked + span {
+  input[type='checkbox']:checked+span {
     color: var(--primary);
     font-weight: 600;
   }
 }
-
