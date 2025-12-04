@@ -11,23 +11,27 @@ import Login from './pages/Login';
 import SignUp from './pages/SignUp';
 import ForgotPassword from './pages/ForgotPassword';
 import Account from './pages/Account';
+import QuickActions from './components/QuickActions';
 
 function App() {
   return (
-    <div className="app-container">
-      <Routes>
-        <Route path="/" element={<Landing />} />
-        <Route path="/search" element={<SearchResults />} />
-        <Route path="/favorites" element={<Favorites />} />
-        <Route path="/hotel/:id" element={<HotelDetail />} />
-        <Route path="/hotel/:id/booking/:roomId" element={<Booking />} />
-        <Route path="/booking-confirmation" element={<BookingConfirmation />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<SignUp />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/account" element={<Account />} />
-      </Routes>
-    </div>
+    <>
+      <div className="app-container">
+        <Routes>
+          <Route path="/" element={<Landing />} />
+          <Route path="/search" element={<SearchResults />} />
+          <Route path="/favorites" element={<Favorites />} />
+          <Route path="/hotel/:id" element={<HotelDetail />} />
+          <Route path="/hotel/:id/booking/:roomId" element={<Booking />} />
+          <Route path="/booking-confirmation" element={<BookingConfirmation />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<SignUp />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/account" element={<Account />} />
+        </Routes>
+      </div>
+      <QuickActions />
+    </>
   );
 }
 

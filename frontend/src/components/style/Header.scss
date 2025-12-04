@@ -4,7 +4,7 @@
   position: relative;
   z-index: 1000;
   width: 100%;
-  padding: 3.2rem 5% 0;
+  padding: 3.2rem 5% 10rem;
   box-sizing: border-box;
 
   .inner {
@@ -20,16 +20,58 @@
   .logo-link {
     display: flex;
     align-items: center;
-    gap: 1.2rem;
+    gap: 1.4rem;
     text-decoration: none;
     color: inherit;
   }
 
+  .logo-mark {
+    width: 3.6rem;
+    height: 3.6rem;
+    border-radius: 1.4rem;
+    background: linear-gradient(135deg, #166d5b, #20a286);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+
+    &__initial {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: #f5faf8;
+      letter-spacing: 0.04em;
+    }
+
+    &__dot {
+      position: absolute;
+      right: 0.5rem;
+      bottom: 0.5rem;
+      width: 0.6rem;
+      height: 0.6rem;
+      border-radius: 999px;
+      background: #f6d38f;
+    }
+  }
+
+  .logo-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
   .logo {
     font-size: 2.4rem;
-    font-weight: 700;
+    font-weight: 800;
     color: #1e3e35;
     margin: 0;
+    letter-spacing: 0.02em;
+  }
+
+  .logo-tagline {
+    font-size: 1.2rem;
+    color: #6b8176;
+    font-weight: 500;
   }
 
   .logo-subtitle {

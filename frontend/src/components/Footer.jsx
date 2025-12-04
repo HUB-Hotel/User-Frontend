@@ -29,11 +29,7 @@ const Footer = () => {
     <footer className="site-footer">
       <div className="footer-top">
         <div className="social-links">
-          <span>🍎</span>
-          <span>f</span>
-          <span>t</span>
-          <span>in</span>
-          <span>YT</span>
+          <span className="social-brand">HotelBnB</span>
         </div>
       </div>
       <div className="footer-columns">
@@ -49,7 +45,7 @@ const Footer = () => {
         ))}
       </div>
       <div className="footer-bottom">
-        © {new Date().getFullYear()} The Travel. 모든 권리 보유.
+        © {new Date().getFullYear()} HotelBnB. 모든 권리 보유.
       </div>
     </footer>
   );
