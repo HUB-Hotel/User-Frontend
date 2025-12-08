@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FiUpload, FiEdit2, FiX, FiUser, FiCreditCard, FiPlus, FiTrash2 } from 'react-icons/fi';
+import { getUserInfo, updateUserInfo, changePassword } from '../api/userApi';
+import { getErrorMessage } from '../api/client';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import './style/Account.scss';
@@ -30,28 +32,14 @@ const defaultProfileOptions = [
 
 const Account = () => {
   const [activeTab, setActiveTab] = useState('account');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   
-  // localStorage에서 사용자 정보 불러오기
-  const loadUserInfo = () => {
-    const stored = localStorage.getItem('userInfo');
-    if (stored) {
-      try {
-        return JSON.parse(stored);
-      } catch (error) {
-        console.error('Failed to load user info', error);
-      }
-    }
-    return {
-      name: 'Tomhoon',
-      email: 'gnsdl9079@gmail.com',
-      password: '********',
-      phone: '010-5555-5555',
-      address: '경기도 화성시 화성읍 도레미아파트 101동 101호',
-      birthDate: '1999-99-99',
-    };
-  };
-
-  const [userInfo, setUserInfo] = useState(loadUserInfo);
+  const [userInfo, setUserInfo] = useState({
+    displayName: '',
+    email: '',
+    phone: '',
+  });
   const [editingField, setEditingField] = useState(null);
   const [tempValue, setTempValue] = useState('');
   const [coverImage, setCoverImage] = useState(defaultCoverImages[0]);
@@ -69,30 +57,96 @@ const Account = () => {
     saveInfo: true,
   });
 
+  // 사용자 정보 로드
+  useEffect(() => {
+    const loadUserData = async () => {
+      try {
+        setLoading(true);
+        const response = await getUserInfo();
+        // Backend 응답: { data: {...}, message: "...", resultCode: 200 }
+        const userData = response.data || response.data?.data || response;
+        setUserInfo({
+          displayName: userData.displayName || userData.name || '',
+          email: userData.email || '',
+          phone: userData.phone || '',
+        });
+        // localStorage에도 저장 (다른 컴포넌트에서 사용)
+        localStorage.setItem('userInfo', JSON.stringify(userData));
+      } catch (err) {
+        console.error('Failed to load user info', err);
+        setError(getErrorMessage(err, '사용자 정보를 불러오는데 실패했습니다.'));
+        // localStorage에서 fallback
+        const stored = localStorage.getItem('userInfo');
+        if (stored) {
+          try {
+            const fallbackData = JSON.parse(stored);
+            setUserInfo({
+              displayName: fallbackData.displayName || fallbackData.name || '',
+              email: fallbackData.email || '',
+              phone: fallbackData.phone || '',
+            });
+          } catch (e) {
+            console.error('Failed to parse stored user info', e);
+          }
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadUserData();
+  }, []);
+
   const handleChange = (field, value) => {
     const updatedInfo = {
       ...userInfo,
       [field]: value,
     };
     setUserInfo(updatedInfo);
-    // localStorage에 저장
-    localStorage.setItem('userInfo', JSON.stringify(updatedInfo));
-    
-    // 이름이 변경되면 Header에 알림
-    if (field === 'name') {
-      window.dispatchEvent(new Event('userInfoChanged'));
-    }
   };
 
   const handleEditClick = (field) => {
     setEditingField(field);
-    setTempValue(userInfo[field]);
+    setTempValue(userInfo[field] || '');
   };
 
-  const handleSave = (field) => {
-    handleChange(field, tempValue);
-    setEditingField(null);
-    setTempValue('');
+  const handleSave = async (field) => {
+    try {
+      setError('');
+      let updateData = {};
+      
+      if (field === 'password') {
+        // 비밀번호 변경
+        await changePassword({ newPassword: tempValue });
+        alert('비밀번호가 변경되었습니다.');
+      } else {
+        // 다른 필드 업데이트
+        updateData[field === 'name' ? 'displayName' : field] = tempValue;
+        const response = await updateUserInfo(updateData);
+        
+        // 업데이트된 정보로 상태 갱신
+        const updatedData = response.data || response.data?.data || response;
+        setUserInfo({
+          ...userInfo,
+          displayName: updatedData.displayName || userInfo.displayName,
+          email: updatedData.email || userInfo.email,
+          phone: updatedData.phone || userInfo.phone,
+        });
+        
+        // localStorage 업데이트
+        localStorage.setItem('userInfo', JSON.stringify(updatedData));
+        
+        // 이름이 변경되면 Header에 알림
+        if (field === 'name') {
+          window.dispatchEvent(new Event('userInfoChanged'));
+        }
+      }
+      
+      setEditingField(null);
+      setTempValue('');
+    } catch (err) {
+      setError(getErrorMessage(err, '정보 수정에 실패했습니다.'));
+    }
   };
 
   const handleCancel = () => {
@@ -209,8 +263,8 @@ const Account = () => {
               </button>
             </div>
             <div className="profile-info">
-              <h1>{userInfo.name}</h1>
-              <p>{userInfo.email}</p>
+              <h1>{userInfo.displayName || userInfo.name || '사용자'}</h1>
+              <p>{userInfo.email || '-'}</p>
             </div>
           </div>
         </div>
@@ -296,6 +350,8 @@ const Account = () => {
           <div className="account-content">
             <section className="account-details">
               <h2>계정</h2>
+              {error && <div className="error-message" style={{ color: 'red', marginBottom: '1rem' }}>{error}</div>}
+              {loading && <div style={{ marginBottom: '1rem' }}>로딩 중...</div>}
               <div className="info-item">
                 <div className="info-label">이름</div>
                 {editingField === 'name' ? (
@@ -306,7 +362,7 @@ const Account = () => {
                     onChange={(e) => setTempValue(e.target.value)}
                   />
                 ) : (
-                  <div className="info-value">{userInfo.name}</div>
+                  <div className="info-value">{userInfo.displayName || userInfo.name || '-'}</div>
                 )}
                 {editingField === 'name' ? (
                   <div className="button-group">
@@ -400,60 +456,6 @@ const Account = () => {
                   </div>
                 ) : (
                   <button className="change-btn" onClick={() => handleEditClick('phone')}>
-                    수정
-                  </button>
-                )}
-              </div>
-              <div className="info-item">
-                <div className="info-label">주소</div>
-                {editingField === 'address' ? (
-                  <input
-                    type="text"
-                    className="info-input"
-                    value={tempValue}
-                    onChange={(e) => setTempValue(e.target.value)}
-                  />
-                ) : (
-                  <div className="info-value">{userInfo.address}</div>
-                )}
-                {editingField === 'address' ? (
-                  <div className="button-group">
-                    <button className="save-btn" onClick={() => handleSave('address')}>
-                      저장
-                    </button>
-                    <button className="cancel-btn" onClick={handleCancel}>
-                      취소
-                    </button>
-                  </div>
-                ) : (
-                  <button className="change-btn" onClick={() => handleEditClick('address')}>
-                    수정
-                  </button>
-                )}
-              </div>
-              <div className="info-item">
-                <div className="info-label">생년월일</div>
-                {editingField === 'birthDate' ? (
-                  <input
-                    type="date"
-                    className="info-input"
-                    value={tempValue}
-                    onChange={(e) => setTempValue(e.target.value)}
-                  />
-                ) : (
-                  <div className="info-value">{userInfo.birthDate}</div>
-                )}
-                {editingField === 'birthDate' ? (
-                  <div className="button-group">
-                    <button className="save-btn" onClick={() => handleSave('birthDate')}>
-                      저장
-                    </button>
-                    <button className="cancel-btn" onClick={handleCancel}>
-                      취소
-                    </button>
-                  </div>
-                ) : (
-                  <button className="change-btn" onClick={() => handleEditClick('birthDate')}>
                     수정
                   </button>
                 )}

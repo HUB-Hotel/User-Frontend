@@ -3,6 +3,9 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { FiMapPin, FiCalendar, FiUsers, FiCreditCard, FiPlus } from 'react-icons/fi';
+import { createBooking } from '../api/bookingApi';
+import { getRooms } from '../api/hotelApi';
+import { getErrorMessage } from '../api/client';
 import { allHotelsData } from './SearchResults';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -27,6 +30,11 @@ const Booking = () => {
   const [isSummaryVisible, setIsSummaryVisible] = useState(false);
   const [isAddCardModalOpen, setIsAddCardModalOpen] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
+  const [actualRoom, setActualRoom] = useState(null);
+  const [loadingRoom, setLoadingRoom] = useState(false);
+  const [userInfo, setUserInfo] = useState(null);
   const [newCard, setNewCard] = useState({
     cardNumber: '',
     expDate: '',
@@ -41,36 +49,78 @@ const Booking = () => {
     return allHotelsData.find((h) => h.id === parseInt(id));
   }, [id]);
 
-  // 객실 데이터 (실제로는 roomId로 찾아야 하지만, 여기서는 간단히 처리)
+  // 실제 Room API에서 데이터 가져오기
+  useEffect(() => {
+    const fetchRoom = async () => {
+      if (!id || !roomId) return;
+      
+      try {
+        setLoadingRoom(true);
+        const response = await getRooms(id);
+        const rooms = response.data || [];
+        
+        // roomId가 숫자인 경우 인덱스로 찾기, ObjectId인 경우 _id로 찾기
+        const roomIndex = parseInt(roomId) - 1;
+        let foundRoom = null;
+        
+        if (roomIndex >= 0 && roomIndex < rooms.length) {
+          foundRoom = rooms[roomIndex];
+        } else {
+          // ObjectId로 찾기 시도
+          foundRoom = rooms.find(r => r._id === roomId || r.id === roomId);
+        }
+        
+        if (foundRoom) {
+          setActualRoom(foundRoom);
+        } else {
+          // Fallback: 기본 객실 데이터
+          const fallbackRooms = [
+            { _id: '1', roomName: 'Superior Room', price: 240000 },
+            { _id: '2', roomName: 'Deluxe Room', price: 280000 },
+            { _id: '3', roomName: 'Suite', price: 350000 },
+            { _id: '4', roomName: 'Executive Suite', price: 450000 },
+          ];
+          setActualRoom(fallbackRooms[roomIndex] || fallbackRooms[0]);
+        }
+      } catch (err) {
+        console.error('Failed to fetch room:', getErrorMessage(err));
+        // Fallback: 기본 객실 데이터
+        const fallbackRooms = [
+          { _id: '1', roomName: 'Superior Room', price: 240000 },
+          { _id: '2', roomName: 'Deluxe Room', price: 280000 },
+          { _id: '3', roomName: 'Suite', price: 350000 },
+          { _id: '4', roomName: 'Executive Suite', price: 450000 },
+        ];
+        const roomIndex = parseInt(roomId) - 1;
+        setActualRoom(fallbackRooms[roomIndex >= 0 && roomIndex < fallbackRooms.length ? roomIndex : 0]);
+      } finally {
+        setLoadingRoom(false);
+      }
+    };
+    
+    fetchRoom();
+  }, [id, roomId]);
+
+  // Fallback용 객실 데이터
   const room = useMemo(() => {
-    const rooms = [
-      {
-        id: 1,
-        name: 'Superior Room',
-        description: '1 더블베드 or 2 트윈 베드',
-        price: 240000,
-      },
-      {
-        id: 2,
-        name: 'Deluxe Room',
-        description: '1 king bed with city view',
-        price: 280000,
-      },
-      {
-        id: 3,
-        name: 'Suite',
-        description: '2 bedrooms with living area',
-        price: 350000,
-      },
-      {
-        id: 4,
-        name: 'Executive Suite',
-        description: '3 bedrooms with full kitchen',
-        price: 450000,
-      },
+    if (actualRoom) {
+      return {
+        id: actualRoom._id || actualRoom.id,
+        name: actualRoom.roomName || actualRoom.name || '객실',
+        description: actualRoom.description || '',
+        price: actualRoom.price || 240000,
+      };
+    }
+    
+    // 기본값
+    const fallbackRooms = [
+      { id: 1, name: 'Superior Room', description: '1 더블베드 or 2 트윈 베드', price: 240000 },
+      { id: 2, name: 'Deluxe Room', description: '1 king bed with city view', price: 280000 },
+      { id: 3, name: 'Suite', description: '2 bedrooms with living area', price: 350000 },
+      { id: 4, name: 'Executive Suite', description: '3 bedrooms with full kitchen', price: 450000 },
     ];
-    return rooms.find((r) => r.id === parseInt(roomId)) || rooms[0];
-  }, [roomId]);
+    return fallbackRooms.find((r) => r.id === parseInt(roomId)) || fallbackRooms[0];
+  }, [actualRoom, roomId]);
 
   const baseFare = room?.price || 240000;
   const taxes = 0;
@@ -83,6 +133,17 @@ const Booking = () => {
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    // localStorage에서 사용자 정보 불러오기
+    const storedUserInfo = localStorage.getItem('userInfo');
+    if (storedUserInfo) {
+      try {
+        const user = JSON.parse(storedUserInfo);
+        setUserInfo(user);
+      } catch (error) {
+        console.error('Failed to load user info', error);
+      }
+    }
     
     // localStorage에서 결제수단 불러오기
     const stored = localStorage.getItem('paymentMethods');
@@ -230,6 +291,8 @@ const Booking = () => {
 
   const buildBookingPayload = useCallback(() => {
     const bookingNumber = Date.now().toString().slice(-8);
+    // 사용자 이름 가져오기 (displayName 또는 name)
+    const userName = userInfo?.displayName || userInfo?.name || '게스트';
     return {
       hotelName: hotel?.name || '해튼호텔',
       roomName: room ? `${room.name} - ${room.description}` : '객실 정보',
@@ -242,7 +305,7 @@ const Booking = () => {
       checkInTime: '12:00pm',
       checkOutTime: '11:30pm',
       arrivalInfo: '결제 완료',
-      guestName: 'James Doe',
+      guestName: userName,
       guestCount: guests,
       bookingNumber,
       barcode: '|| ||| | |||| |||',
@@ -250,22 +313,67 @@ const Booking = () => {
       bookingId: `${id || '1'}-${roomId || '1'}`,
       createdAt: new Date().toISOString(),
     };
-  }, [hotel?.name, hotel?.address, room, city, country, checkIn, checkOut, guests, roomId, total, id]);
+  }, [hotel?.name, hotel?.address, room, city, country, checkIn, checkOut, guests, roomId, total, id, userInfo]);
 
-  const handleConfirmPayment = () => {
-    const payload = buildBookingPayload();
-
-    try {
-      const stored = JSON.parse(localStorage.getItem('bookingHistory') || '[]');
-      const filtered = stored.filter((item) => item.bookingNumber !== payload.bookingNumber);
-      const updated = [payload, ...filtered].slice(0, 10);
-      localStorage.setItem('bookingHistory', JSON.stringify(updated));
-    } catch (error) {
-      console.error('Failed to store booking history', error);
+  const handleConfirmPayment = async () => {
+    if (!checkIn || !checkOut) {
+      setError('체크인/체크아웃 날짜를 선택해주세요.');
+      return;
     }
 
-    setIsPaymentModalOpen(false);
-    navigate('/booking-confirmation', { state: payload });
+    try {
+      setIsSubmitting(true);
+      setError('');
+
+      // Backend에 보낼 예약 데이터 구성
+      // actualRoom의 _id를 사용하거나, 없으면 roomId 사용
+      const actualRoomId = actualRoom?._id || actualRoom?.id || roomId;
+      
+      const bookingData = {
+        lodgingId: id,
+        roomId: actualRoomId,
+        checkIn: checkIn,
+        checkOut: checkOut,
+        guests: parseInt(guests) || 2,
+        rooms: parseInt(rooms) || 1,
+        price: total,
+        phone: phoneNumber || '',
+        // 결제는 실제 포트원 연동 시 paymentId를 받아서 전달
+        // 현재는 임시로 결제 완료 상태로 처리
+        paymentId: `temp_${Date.now()}`,
+      };
+
+      // API 호출
+      const response = await createBooking(bookingData);
+      
+      // 예약 성공 시 payload 구성
+      const payload = buildBookingPayload();
+      
+      // 응답 데이터로 업데이트
+      const bookingResponse = response.data || response.data?.data || response;
+      if (bookingResponse) {
+        payload.bookingId = bookingResponse._id || bookingResponse.id || payload.bookingId;
+        payload.bookingNumber = bookingResponse.bookingNumber || payload.bookingNumber;
+      }
+
+      // localStorage에 저장 (히스토리용)
+      try {
+        const stored = JSON.parse(localStorage.getItem('bookingHistory') || '[]');
+        const filtered = stored.filter((item) => item.bookingNumber !== payload.bookingNumber);
+        const updated = [payload, ...filtered].slice(0, 10);
+        localStorage.setItem('bookingHistory', JSON.stringify(updated));
+      } catch (error) {
+        console.error('Failed to store booking history', error);
+      }
+
+      setIsPaymentModalOpen(false);
+      navigate('/booking-confirmation', { state: payload });
+    } catch (err) {
+      console.error('Failed to create booking', err);
+      setError(getErrorMessage(err, '예약에 실패했습니다. 다시 시도해주세요.'));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (!hotel) {
@@ -426,6 +534,11 @@ const Booking = () => {
             </label>
             <p className="contact-info-helper">입력하신 번호로 예약 확인 문자가 전송됩니다.</p>
           </div>
+          {error && (
+            <div className="error-message" style={{ color: 'red', marginBottom: '1rem', padding: '1rem', background: '#fee', borderRadius: '4px' }}>
+              {error}
+            </div>
+          )}
           <div className="next-button-container">
             {isEditing ? (
               <button
@@ -513,6 +626,11 @@ const Booking = () => {
           <div className="confirm-modal" onClick={(e) => e.stopPropagation()}>
             <h2>결제를 진행하시겠습니까?</h2>
             <p>결제 완료 후 예약이 확정됩니다.</p>
+            {error && (
+              <div className="error-message" style={{ color: 'red', marginBottom: '1rem', padding: '0.5rem' }}>
+                {error}
+              </div>
+            )}
             <div className="modal-actions">
               <button className="btn secondary" onClick={() => setIsPaymentModalOpen(false)}>
                 취소
@@ -520,8 +638,9 @@ const Booking = () => {
               <button
                 className="btn primary"
                 onClick={handleConfirmPayment}
+                disabled={isSubmitting}
               >
-                확인
+                {isSubmitting ? '처리 중...' : '확인'}
               </button>
             </div>
           </div>

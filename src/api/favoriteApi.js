@@ -10,15 +10,15 @@ export const getFavorites = async () => {
   return data;
 };
 
-// 찜하기 추가/삭제 (토글)
-export const addFavorite = async (hotelId) => {
-  const { data } = await api.post(`/bookmarks/${hotelId}`);
+// 찜하기 추가
+export const addFavorite = async (lodgingId) => {
+  const { data } = await api.post('/bookmarks', { lodgingId });
   return data;
 };
 
-// 찜하기 삭제 (토글과 동일)
-export const removeFavorite = async (hotelId) => {
-  const { data } = await api.post(`/bookmarks/${hotelId}`);
+// 찜하기 삭제
+export const removeFavorite = async (lodgingId) => {
+  const { data } = await api.delete(`/bookmarks/${lodgingId}`);
   return data;
 };
 

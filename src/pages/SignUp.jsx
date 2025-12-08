@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { FiEye, FiEyeOff } from 'react-icons/fi';
 import { FaFacebook, FaGoogle, FaApple } from 'react-icons/fa';
@@ -20,6 +20,28 @@ const SignUp = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreed, setAgreed] = useState(false);
   const [error, setError] = useState('');
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  const slides = [
+    'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=1200&q=80',
+  ];
+
+  useEffect(() => {
+    // 첫 번째 이미지가 즉시 보이도록 확인
+    console.log('Current slide:', currentSlide);
+    
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => {
+        const next = (prev + 1) % slides.length;
+        console.log('Slide changed to:', next);
+        return next;
+      });
+    }, 5000);
+
+    return () => clearInterval(timer);
+  }, [slides.length]);
 
   const handleChange = (e) => {
     setFormData({
@@ -89,14 +111,36 @@ const SignUp = () => {
       <div className="auth-container">
         <div className="auth-image-section">
           <div className="image-carousel">
-            <img
-              src="https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80"
-              alt="Resort"
-            />
+            {slides.map((src, index) => {
+              const isActive = index === currentSlide;
+              return (
+                <img
+                  key={`slide-${index}`}
+                  src={src}
+                  alt={`Resort ${index + 1}`}
+                  className={isActive ? 'active' : ''}
+                  style={{ 
+                    opacity: isActive ? 1 : 0,
+                    zIndex: isActive ? 1 : 0,
+                    transition: 'opacity 0.8s ease-in-out'
+                  }}
+                  onError={(e) => {
+                    console.error('Image failed to load:', src);
+                    e.target.style.display = 'none';
+                  }}
+                />
+              );
+            })}
             <div className="carousel-indicators">
-              <span className="indicator active"></span>
-              <span className="indicator"></span>
-              <span className="indicator"></span>
+              {slides.map((_, index) => (
+                <button
+                  key={`indicator-${index}`}
+                  type="button"
+                  className={`indicator ${index === currentSlide ? 'active' : ''}`}
+                  onClick={() => setCurrentSlide(index)}
+                  aria-label={`이미지 ${index + 1} 보기`}
+                ></button>
+              ))}
             </div>
           </div>
         </div>
